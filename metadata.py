@@ -44,12 +44,12 @@ def versions(url):
 
         # Only keep latest version for testing for now
         version = x.get("href").split("/")[-2]
-        if version != "latest":
+        if version == "latest":
             continue
 
         fetch_url = DOMAIN + x.get("href")
-        if get_cached(url) is not None:
-            yield get_cached(url)
+        if get_cached(fetch_url) is not None:
+            yield get_cached(fetch_url)
             continue
 
         try:
@@ -58,7 +58,7 @@ def versions(url):
             yield Plugin(version, url.split("/")[-2], fetch_url, "BROKEN (might be 404)")
             continue
         plugin = Plugin(version, url.split("/")[-2], fetch_url, sha)
-        set_cached(url, plugin)
+        set_cached(fetch_url, plugin)
         yield plugin
 
 
@@ -98,9 +98,10 @@ def main():
     with open("plugins.nix", "w") as f:
         f.write(HEADER)
         for p in plugins():
-            for plugin in versions(p):
-                print plugin
-                f.write(derivation(plugin))
+            px = versions(p)
+            plugin = px.next() # one after latest
+            print plugin
+            f.write(derivation(plugin))
         f.write(FOOTER)
 
 
